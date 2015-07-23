@@ -18,6 +18,7 @@
     Uart (UART 1 used with 9600br/8bits/no_parity/1stopbits/Asynchronous)
     CAN if available
     USB if available
+    MCU Clock set to 64MHz
     Software heartbeat located on PB0 Led
 
   Compiler:
@@ -46,8 +47,9 @@
 
 
 
+
 /*
- Language Standard Library:
+ Standard ANSI C Library:
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,18 +66,19 @@
 
 
 
+
 /*
  Configurations Bits Definitions:
  */
-#include "Config_Bits.h"
-#include "typedef.h"
+#include "config_bits.h"
+
 
 
 
 /*
- Clock Definition:
+ Allowable XC8 types definitions
  */
-#define MCU_FREQ 64000000
+#include "typedef.h"
 
 
 
@@ -83,8 +86,8 @@
 /*
  Port Definitions:
  */
+/* Heartbeat LED port definition */
 #define LED LATBbits.LATB0
-
 
 
 
@@ -92,36 +95,32 @@
 /*
  Bootloader specific
  */
+/* Bootloader version definition */
 #define VERSION "1.0.a"
+/* One separately page size */
 #define PAGE_SIZE 64
 
 
 
 
 /*
- * Application start address
+ * Flash necessary defines definition
  */
-//xxx#define APP_ENTRY 0x800
-#define APP_ENTRY 0x1500
+/* Define where user application start */
+#define APP_ENTRY 0x1000
+/* Maximum amount of Flash */
 #define FLASH_SIZE 0x10000
-
+/* Quantity 64bytes flash block available for user application */
 #define COUNTS_TO_ERASE_APP (FLASH_SIZE-APP_ENTRY) / FLASH_ERASE_BLOCK
 
-
-
-#asm
-PSECT intcode
-goto APP_ENTRY + 0x8
-PSECT intcodelo
-goto APP_ENTRY + 0x18
-#endasm
 
 
 
 /*
  Global variables
  */
-u8 gbuffer[PAGE_SIZE];
+/* Buffer which is intended to contain bytes to be written in flash */
+u8 gbuffer[PAGE_SIZE]; 
 
 
 
@@ -187,7 +186,7 @@ static void UART_putchar(u8 outchar);
 
 /*
 Function name   :   UART_getchar
-Description     :   Function receive character acquired from UART
+Description     :   Function receive character acquired from UART if available
 Input 1         :   None
 Output          :   None
 Function return :   u8: Return recived byte from UART
@@ -348,12 +347,12 @@ static void write_flash(u32 address, u8 *buffer, u8 length);
 
 
 
-int main(int argc, char** argv) {
-
+int main(int argc, char** argv)
+{
     u32 hbeat = 0;
-    
+
     /* Main Oscillator Configuration */
-    
+
     /* Set Internal Oscillator Frequency to 16[MHz] */
     OSCCONbits.IRCF2 = 1;
     OSCCONbits.IRCF1 = 1;
@@ -364,53 +363,52 @@ int main(int argc, char** argv) {
 
     /* Enable Internal PLL x 4 - MCLK 64 [MHz] */
     OSCTUNEbits.PLLEN = 1;
-    
+
     /* GPIO Ports Configuration */
-    
+
     /* Heartbeat Led diode port configuration */
     TRISBbits.TRISB0 = 0;
-    
+
     /* Initialize UART 1 - 9600, 8bits, 1stb, no parity */
     UART_init();
-    
+
     while(1){
-        
         if(hbeat == 0x03FF){
-			LED = 1;
+            LED = 1;
             hbeat++;
-		}
-		else if( hbeat == 0x2FFF ){
-			LED = 0;
+        }
+        else if( hbeat == 0x2FFF ){
+            LED = 0;
             hbeat++;
-		}
-		else if (hbeat == 0x1FFFF){
-			hbeat = 0x00;
+        }
+        else if (hbeat == 0x1FFFF){
+            hbeat = 0x00;
         }
         else{			
             hbeat++;
         }
-        
         bootloader_state_machine(UART_getchar());
     }
-    
-    return (EXIT_SUCCESS);
+
+  return (EXIT_SUCCESS);
 }
 
 
 
 
-/*static void delay_ms(u16 duration) {
-    u16 i;
-    u16 j;
-    for (i = duration; i != 0; i--) {
-        for (j = 0; j <= 1000; j++) {
-            asm("nop");
-            asm("nop");
-            asm("nop");
-        }
-        asm("nop");
-        asm("nop");
+/*static void delay_ms(u16 duration)
+{
+  u16 i;
+  u16 j;
+  for (i = duration; i != 0; i--){
+    for (j = 0; j <= 1000; j++){
+      asm("nop");
+      asm("nop");
+      asm("nop");
     }
+    asm("nop");
+    asm("nop");
+  }
 }*/
 
 
@@ -418,25 +416,24 @@ int main(int argc, char** argv) {
 
 static void UART_init(void)
 {
-    
     TRISCbits.TRISC6 = 0; /* TX pin set as output */
     TRISCbits.TRISC7 = 1; /* RX pin set as input */
- 
+
     /* Don't calculate Baudrate just take value from user manual
-       page 339. */
-    
+     page 339. */
+
     /* Sync = 0, BRGH = 0, BRG16 = 0 FOSC = 64MHz */
     TXSTAbits.SYNC = 0;
     TXSTAbits.BRGH = 0;
     BAUDCON1bits.BRG16 = 0;
     SPBRG = 103;
-    
+
     /* Serial Port Enable Transmission - ON */
     TXSTAbits.TXEN = 1;
-    
+
     /* Serial Port Enable bit - ON */
     RCSTAbits.SPEN = 1;
-    
+
     /* Continous Receive Enable bit - ON */
     RCSTAbits.CREN = 1;
 }
@@ -446,7 +443,6 @@ static void UART_init(void)
 
 static void UART_putchar(u8 outchar)
 {
-
     while(!TXSTA1bits.TRMT);
 
     TXREG1 = outchar;
@@ -491,12 +487,12 @@ static u8 UART_wait_for_char(void)
 static void send_boot_version(u8 *buf)
 {
     u8 i = 0x00;
-	
-	do{
+
+    do{
         if(buf[i] != '\0'){
             UART_putchar(buf[i]);
         }
-	}while(buf[i++] != '\0');
+    }while(buf[i++] != '\0');
 }
 
 
@@ -514,41 +510,42 @@ static void bootloader_state_machine(u8 state)
     static u16 page_index = 0x00;
     static u32 timeout = 0x00;
     static u8 i = 0;
-    
+
     switch (state)
     {
         case 0xC1:{
-			send_boot_version((u8 *)VERSION);	
-			timeout = 0;
+            send_boot_version((u8 *)VERSION);	
+            timeout = 0;
         break;
         }
-                
         case 0xAA:{
             UART_putchar(0x55);
             state = 0x00;
         break;
         }
-
         case 0x31:{
-            if(UART_wait_for_char() == 'Q')
-                if(UART_wait_for_char() == 'W')
-                    if(UART_wait_for_char() == 'E')
-                        if(UART_wait_for_char() == 'R')
+            if(UART_wait_for_char() == 'Q'){
+                if(UART_wait_for_char() == 'W'){
+                    if(UART_wait_for_char() == 'E'){
+                        if(UART_wait_for_char() == 'R'){
                             if(UART_wait_for_char() == 'T'){
-                                for (u32 erase_address = APP_ENTRY; erase_address < FLASH_SIZE; erase_address += FLASH_ERASE_BLOCK) {
-                                    erase_flash(erase_address);
-                                    }
+                                for (u32 adr = APP_ENTRY; adr < FLASH_SIZE; adr += FLASH_ERASE_BLOCK){
+                                    erase_flash(adr);
+                                }
                                 UART_putchar(0xEE);
                             }
+                        }
+                    }
+                }
+            }
             state = 0x00;
         break;
         }
-
         case 0x32:{	
-            if(UART_wait_for_char() == 'Q')
-                if(UART_wait_for_char() == 'W')
-                    if(UART_wait_for_char() == 'E')
-                        if(UART_wait_for_char() == 'R')
+            if(UART_wait_for_char() == 'Q'){
+                if(UART_wait_for_char() == 'W'){
+                    if(UART_wait_for_char() == 'E'){
+                        if(UART_wait_for_char() == 'R'){
                             if(UART_wait_for_char() == 'T'){
                                 /* Processing data which came from UART, byte after byte */
                                 do{
@@ -572,12 +569,10 @@ static void bootloader_state_machine(u8 state)
                                         crc += temp; // Add to crc
                                         record_type = temp;
 
-
                                         /* Check what kind of record came */
                                         if(record_type == 0){
                                             /* One separate record analysis - data buffering */
-                                            for(i=0; i<=byte_in_record; i++)
-                                            {
+                                            for(i=0; i<=byte_in_record; i++){
                                                 gbuffer[byte_index] = UART_wait_for_char();
                                                 crc += gbuffer[byte_index];
                                                 byte_index++;
@@ -604,8 +599,8 @@ static void bootloader_state_machine(u8 state)
                                         }
                                         /* The 16-bit Extended segment address record */
                                         else if(record_type == 2){
-                                            /* According to specification the address should be calculated
-                                            as follow: */
+                                            /* According to specification the address should 
+                                            be calculated as follow: */
                                             for(i=0; i<=byte_in_record; i++){
                                                 crc += UART_wait_for_char();
                                             }
@@ -620,8 +615,8 @@ static void bootloader_state_machine(u8 state)
                                         }
                                         /* The 32-bit Extended linear address record */
                                         else if(record_type == 4){
-                                            /* According to specification the address should be calculated
-                                            as follow: */
+                                            /* According to specification the address should 
+                                            be calculated as follow: */
                                             for(i=0; i<=byte_in_record; i++){
                                                 crc += UART_wait_for_char();
                                             }
@@ -642,36 +637,39 @@ static void bootloader_state_machine(u8 state)
                                             UART_putchar(0xF0);
                                         }
                                     }
-                                    else{	
+                                    else{
                                         end_of_record = 1;
                                     }
                                     timeout++;
-                                }while((end_of_record != 1)||(timeout==100)); /* Leave loop when processing finish or detected wrong crc */
-
-                                //xxxboot_program_page(1, gBuffer);
-                                }
-            state = 0x00;
-            page_index =0x00;
-            byte_index = 0x00;
-            record_address = 0x00;
-            byte_in_record = 0x00;
-            record_type = 0x00;
-            timeout = 0x00;
-            end_of_record = 0x00;
-            crc = 0x00;
+                                    /* Leave loop when processing finish or detected wrong crc */
+                                }while((end_of_record != 1)||(timeout==100));
+                            }
+                            state = 0x00;
+                            page_index =0x00;
+                            byte_index = 0x00;
+                            record_address = 0x00;
+                            byte_in_record = 0x00;
+                            record_type = 0x00;
+                            timeout = 0x00;
+                            end_of_record = 0x00;
+                            crc = 0x00;
+                        }
+                    }
+                }
+            }
         break;
         }
-
         case 0x33:
         {
             UART_putchar(0x76);
             jump_to_app(); /* Jump to user application code */
         break;
         }
-
         default:
+        {
             ;
         break;
+        }
     }
 }
 
@@ -680,11 +678,11 @@ static void bootloader_state_machine(u8 state)
 
 static void clear_buffer(u8 *buf, u16 idx)
 {
-	u16 i = 0x00;
-	for(i=0; i<idx; i++)
-	{
-		buf[i]=0xFF;
-	}
+    u16 i = 0x00;
+    for(i=0; i<idx; i++)
+    {
+        buf[i]=0xFF;
+    }
 }
 
 
@@ -693,11 +691,6 @@ static void clear_buffer(u8 *buf, u16 idx)
 static void jump_to_app(void)
 {
     RCON |= 0x93; /* Set all flags as just after reset */
-    //xxx#asm
-    //xxxPSECT intcode
-    //xxxgoto 0x0800
-    //xxx#endasm
-    //asm("goto 0x0800");
     asm("goto " ___mkstr(APP_ENTRY));
 }
 
@@ -707,10 +700,10 @@ static void jump_to_app(void)
 static void erase_flash(u32 address)
 {
     PIR4bits.EEIF = 0;
-        
-	TBLPTRL = (address) & 0xFF;
-	TBLPTRH = (address >> 8) & 0xFF;
-	TBLPTRU = (address >> 16) & 0xFF;
+
+    TBLPTRL = (address) & 0xFF;
+    TBLPTRH = (address >> 8) & 0xFF;
+    TBLPTRU = (address >> 16) & 0xFF;
 
     /*
      * bit 7, EEPGD = 1, memory is flash (unimplemented on J PIC)
@@ -723,20 +716,20 @@ static void erase_flash(u32 address)
      * bit 0, RD    = 0, (unimplemented on J PIC)
      */
 
-    EECON1 = 0xA4; // 0b10100100
+    EECON1 = 0xA4; /* 0b10100100 */
 
-    EECON1bits.FREE = 1;// perform erase operation
-    EECON2 = 0x55;      // unlock sequence
-    EECON2 = 0xAA;      // unlock sequence
-    EECON1bits.WR = 1;  // start write or erase operation
-    EECON1bits.FREE = 0;// back to write operation
+    EECON1bits.FREE = 1;    /* perform erase operation */
+    EECON2 = 0x55;          /* unlock sequence */
+    EECON2 = 0xAA;          /* unlock sequence */
+    EECON1bits.WR = 1;      /* start write or erase operation */
+    EECON1bits.FREE = 0;    /* back to write operation */
 
     INTCONbits.GIE = 1;
-    
+
     while (!PIR4bits.EEIF);
     PIR4bits.EEIF = 0;
     EECON1bits.WREN = 0;
-    
+
     INTCONbits.GIE = 0;
 }
 
@@ -745,13 +738,13 @@ static void erase_flash(u32 address)
 
 static void write_flash(u32 address, u8 *buffer, u8 length)
 {
-	int counter;
+    int counter;
 
     PIR4bits.EEIF = 0;
 
-	TBLPTRL = (address) & 0xFF;
-	TBLPTRH = (address >> 8) & 0xFF;
-	TBLPTRU = (address >> 16) & 0xFF;
+    TBLPTRL = (address) & 0xFF;
+    TBLPTRH = (address >> 8) & 0xFF;
+    TBLPTRU = (address >> 16) & 0xFF;
 
     /*
      * bit 7, EEPGD = 1, memory is flash (unimplemented on J PIC)
@@ -764,38 +757,38 @@ static void write_flash(u32 address, u8 *buffer, u8 length)
      * bit 0, RD    = 0, (unimplemented on J PIC)
      */
 
-    EECON1 = 0xA4; // 0b10100100
+    EECON1 = 0xA4; /* 0b10100100 */
 
     INTCONbits.GIE = 0;
 
-    /// The programming block is 32 bytes for all chips except x5k50
-    /// The programming block is 64 bytes for x5k50.
+    /* The programming block is 32 bytes for all chips except x5k50 */
+    /* The programming block is 64 bytes for x5k50 */
 
-    // Load max. 64 holding registers
+    /* Load max. 64 holding registers*/
     for (counter = 0; counter < length; counter++) {
-        TABLAT = buffer[counter]; // present data to table latch
-        // write data in TBLWT holding register
-        // TBLPTR is incremented after the read/write
-        #asm
-        	TBLWT*+
-        #endasm;
+      TABLAT = buffer[counter]; /* present data to table latch */
+      /* write data in TBLWT holding register */
+      /* TBLPTR is incremented after the read/write */
+      #asm
+          TBLWT*+
+      #endasm;
     }
 
-    // start block write
-    // one step back to be inside the 32 bytes range
+    /* Start block write */
+    /* One step back to be inside the 32 bytes range */
     #asm
-    	TBLRD*-
+        TBLRD*-
     #endasm;
 
 
     EECON2 = 0x55;
     EECON2 = 0xAA;
 
-    EECON1bits.WR = 1;      // WR = 1; start write or erase operation
-                            // WR cannot be cleared, only set, in software.
-                            // It is cleared in hardware at the completion
-                            // of the write or erase operation.
-                            // CPU stall here for 2ms
+    EECON1bits.WR = 1;  /* WR = 1; start write or erase operation */
+                        /* WR cannot be cleared, only set, in software */
+                        /* It is cleared in hardware at the completion */
+                        /* of the write or erase operation */
+                        /* CPU stall here for 2ms */
 
     INTCONbits.GIE = 1;
 

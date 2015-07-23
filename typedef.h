@@ -6,7 +6,7 @@
     Conecern to Pic18fxxkxx devices for XC8 compiler
 
   File name:
-    main.c
+    typedef.h
 
   File destination:
     This file give simple type definition
