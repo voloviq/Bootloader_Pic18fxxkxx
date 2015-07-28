@@ -365,6 +365,7 @@ int main(int argc, char** argv)
 {
     u32 hbeat = 0;
 
+
     /* Main Oscillator Configuration */
 
     /* Set Internal Oscillator Frequency to 16[MHz] */
@@ -492,7 +493,7 @@ static u8 UART_getchar(void)
 
 
 static u8 UART_wait_for_char(void)
-{   
+{
     while(!RCIF);
     if( (RCSTAbits.FERR == 1) || (RCSTAbits.OERR == 1) ){
         RCSTAbits.CREN = 0; /* Clear an error */
@@ -515,22 +516,23 @@ static void send_boot_version(u8 *buf)
     }while(buf[i++] != '\0');
 }
 
-
+    u8  byte_in_record = 0x00;
+    u8  temp = 0x00;
+    u8  crc = 0x00;
+    u32 address = 0x00000000;
+    u16 offset = 0x00;
+    u8  record_type = 0x00;
+    u8  end_of_record = 0x00;
+    u16 byte_index = 0x00;
+    u16 size = 0x00;
+    u32 timeout = 0x00;
+    u8  i = 0;
+    u8 vl = 0;
 
 
 static void bootloader_state_machine(u8 state)
 {
-    static u8 byte_in_record = 0x00;
-    static u8 temp = 0x00;
-    static u8 crc = 0x00;
-    static u32 address = 0x00000000;
-    static u16 offset = 0x00;
-    static u16 record_type = 0x00;
-    static u8 end_of_record = 0x00;
-    static u16 byte_index = 0x00;
-    static u16 page_index = 0x00;
-    static u32 timeout = 0x00;
-    static u8 i = 0;
+
 
     switch (state)
     {
@@ -594,57 +596,44 @@ static void bootloader_state_machine(u8 state)
                                         switch (record_type){
                                             case DATA_RECORD:
                                                 if((u32)address == (u32)0x00){
-                                                    /* First data record detected concatenate offset and byte_in_record */
-                                                    //address &= 0xFFFF0000;
-                                                    address = (((u32)offset)+byte_in_record);
+                                                    /* Assign first address from offset */
+                                                    address = (u32)offset;
+    
+                                                    vl = (u8)address;
+
+                                                    vl = (vl % 0x3F)>>4;
+                                                    
+                                                    byte_index = (u16)(0x10*vl);
+
+                                                    address = address - (u32)(vl<<4);
+                                                    
+                                                    size += byte_in_record;
                                                 }
-                                                else if( (address) != (u32)offset){
+                                                else if((address+(u32)PAGE_SIZE) < (u32)(offset)){              
                                                     
                                                     /* Perform separate write */
-                                                    write_flash(address-byte_in_record, gbuffer, PAGE_SIZE);
+                                                    erase_flash(address);
+                                                    write_flash(address, gbuffer, PAGE_SIZE);
+                                                    
+                                                    /* Clear buffer after write to flash */
                                                     clear_buffer(gbuffer,PAGE_SIZE);
                                                     
-                                                    if(offset == 0xFF90)
-                                                    {
-                                                        byte_index = 1; 
-                                                    }
-                                                    if(offset == 0xFFA0)
-                                                    {
-                                                        byte_index = 1; 
-                                                    }
-                                                    if(offset == 0xFFB0)
-                                                    {
-                                                        byte_index = 1; 
-                                                    }
-                                                    if(offset == 0xFFC0)
-                                                    {
-                                                        byte_index = 1; 
-                                                    }
-                                                    if(offset == 0xFFD0)
-                                                    {
-                                                        byte_index = 1; 
-                                                    }
-                                                    if(offset == 0xFFE0)
-                                                    {
-                                                        byte_index = 1; 
-                                                    }
-                                                    if(offset == 0xFFF0)
-                                                    {
-                                                        byte_index = 1; 
-                                                    }
-                                                    
-                                                    /* Concatenate offset with address */
                                                     /* Assign new address base on offset */
-                                                    // address &= 0xFFFF0000;
-                                                    address = (((u32)offset)+byte_in_record);
+                                                    address = (u32)offset;
                                                     
-                                                    page_index = address-byte_in_record;
+                                                    vl = (u8)address;
+
+                                                    vl = (vl % 0x3F)>>4;
                                                     
-                                                    /* Set again buffer filing to zero */
-                                                    byte_index = 0; 
+                                                    byte_index = (u16)(0x10*vl);
+
+                                                    address = address - (u32)(vl<<4);
+                                                    
+                                                    // Assign clear new buffer size
+                                                    size = (u16)byte_in_record;
                                                 }
                                                 else{                                            
-                                                    address += (u32)byte_in_record;
+                                                    size += (u16)byte_in_record;
                                                 }
                                                 /* One separate record analysis - data buffering */
                                                 for(i=0; i<=byte_in_record; i++){
@@ -656,10 +645,18 @@ static void bootloader_state_machine(u8 state)
                                                 if((crc&0xFF) == 0){
                                                     /* If collected page size byte, save page into flash */
                                                     if(byte_index >= PAGE_SIZE){
-                                                        write_flash((page_index), gbuffer, PAGE_SIZE);
+                                                        /* Perform separate write */
+                                                        erase_flash(address);
+                                                        write_flash(address, gbuffer, PAGE_SIZE);
+                                                        
+                                                        address = 0;
+                                                    
+                                                        /* Clear buffer after write to flash */
                                                         clear_buffer(gbuffer,PAGE_SIZE);
+                                                    
                                                         byte_index = 0x00;
-                                                        page_index += PAGE_SIZE;
+                                                        
+                                                        size = (u16)0x00;
                                                     }
                                                     UART_putchar(0xCC);
                                                     crc = 0x00;
@@ -670,15 +667,21 @@ static void bootloader_state_machine(u8 state)
                                                     crc = 0x00;
                                                 }
                                                 crc = 0;
-                                                record_type = 1;
+                                                record_type = (u8)1;
                                                 break;
                                             case END_OF_FILE_RECORD:
                                                 /* If all page filled save into flash */
-                                                write_flash((address), gbuffer, PAGE_SIZE);
+                                                if(byte_index != 0)
+                                                {
+                                                    erase_flash(address);
+                                                    write_flash(address, gbuffer, PAGE_SIZE);
+                                                }
+                                                
                                                 /* Perform separate write */
-                                              //  write_flash(address, gbuffer, PAGE_SIZE);
                                                 clear_buffer(gbuffer,PAGE_SIZE);
+                                                
                                                 end_of_record = 1; /* Last record detected */
+                                                
                                                 UART_putchar(0xF0);
                                                 break;
                                             case EXTENDED_SEGMENT_ADDRESS_RECORD:
@@ -707,12 +710,15 @@ static void bootloader_state_machine(u8 state)
                                             case START_SEGMENT_ADDRESS_RECORD:
                                                 break;
                                             case EXTENDED_LINEAR_ADDRESS_RECORD:
-                                                /* According to specification the address should 
-                                                be calculated as follow: */
+                                                /* If all page filled save into flash */
+                                                if(byte_index != 0)
+                                                {
+                                                    erase_flash(address);
+                                                    write_flash(address, gbuffer, PAGE_SIZE);
                                                 
-                                                /* Perform separate write */
-                                                write_flash(page_index, gbuffer, PAGE_SIZE);
-                                                clear_buffer(gbuffer,PAGE_SIZE);
+                                                    /* Perform separate write */
+                                                    clear_buffer(gbuffer,PAGE_SIZE);
+                                                }
                                                 
                                                 /* Get higher nibble of record address */
                                                 temp = UART_wait_for_char();
@@ -723,6 +729,12 @@ static void bootloader_state_machine(u8 state)
                                                 temp = UART_wait_for_char();
                                                 crc += temp; // Add to crc
                                                 address |= (u32)temp<<16;
+                                                
+                                                vl = (u8)address;
+
+                                                vl = (vl % 0x3F)>>4;
+
+                                                address = address - (u32)(vl<<4);
                                                 
                                                 if((crc&0xFF) == 0){
                                                     UART_putchar(0xCC);
@@ -744,15 +756,16 @@ static void bootloader_state_machine(u8 state)
                                     /* Leave loop when processing finish or detected wrong crc */
                                 }while((end_of_record != 1)||(timeout==100));
                             }
-                            state = 0x00;
-                            page_index =0x00;
-                            byte_index = 0x00;
-                            offset = 0x00;
-                            byte_in_record = 0x00;
-                            record_type = 0x00;
-                            timeout = 0x00;
-                            end_of_record = 0x00;
-                            crc = 0x00;
+                            state = (u16)0;
+                            byte_index = (u16)0;
+                            offset = (u16)0;
+                            byte_in_record = (u16)0;
+                            record_type = (u8)0;
+                            timeout = (u8)0;
+                            end_of_record = (u8)0;
+                            address = (u32)0;
+                            size = (u16)0;
+                            crc = (u8)0;
                         }
                     }
                 }
@@ -801,34 +814,33 @@ static void erase_flash(u32 address)
 {
     PIR4bits.EEIF = 0;
 
-    TBLPTRL = (address) & 0xFF;
+    TBLPTRL = (address) & 0xC0;
     TBLPTRH = (address >> 8) & 0xFF;
     TBLPTRU = (address >> 16) & 0xFF;
 
     /*
      * bit 7, EEPGD = 1, memory is flash (unimplemented on J PIC)
      * bit 6, CFGS  = 0, enable acces to flash (unimplemented on J PIC)
-     * bit 5, WPROG = 1, enable single word write (unimplemented on non-J PIC)
-     * bit 4, FREE  = 0, enable write operation (1 if erase operation)
+     * bit 5, WPROG = 0, enable single word write (unimplemented on non-J PIC)
+     * bit 4, FREE  = 1, enable write operation (1 if erase operation)
      * bit 3, WRERR = 0,
      * bit 2, WREN  = 1, enable write to memory
      * bit 1, WR    = 0,
      * bit 0, RD    = 0, (unimplemented on J PIC)
      */
 
-    EECON1 = 0xA4; /* 0b10100100 */
+    EECON1 = 0x94; /* 0b10010100 */
 
-    EECON1bits.FREE = 1;    /* perform erase operation */
     EECON2 = 0x55;          /* unlock sequence */
     EECON2 = 0xAA;          /* unlock sequence */
     EECON1bits.WR = 1;      /* start write or erase operation */
-    EECON1bits.FREE = 0;    /* back to write operation */
 
     INTCONbits.GIE = 1;
 
     while (!PIR4bits.EEIF);
     PIR4bits.EEIF = 0;
     EECON1bits.WREN = 0;
+    EECON1bits.FREE = 0;    /* back to write operation */
 
     INTCONbits.GIE = 0;
 }
