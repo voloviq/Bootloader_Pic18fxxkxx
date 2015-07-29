@@ -23,35 +23,37 @@
 [v ___ftmul __ftmul `(f  1 e 3 0 ]
 "20 C:\Program Files\Microchip\xc8\v1.34\sources\common\ftsub.c
 [v ___ftsub __ftsub `(f  1 e 3 0 ]
+"4 C:\Program Files\Microchip\xc8\v1.34\sources\common\lbmod.c
+[v ___lbmod __lbmod `(uc  1 e 1 0 ]
 "15 C:\Program Files\Microchip\xc8\v1.34\sources\common\Umul32.c
 [v ___lmul __lmul `(ul  1 e 4 0 ]
-"350 D:\Projekty\Pic18f_Examples\Pic18f_Bootloader\main.c
+"364 D:\Projekty\Pic18f_Examples\Pic18f_Bootloader\main.c
 [v _main main `(i  1 e 2 0 ]
-"417
+"438
 [v _UART_init UART_init `(v  1 s 0 UART_init ]
-"444
+"465
 [v _UART_putchar UART_putchar `(v  1 s 0 UART_putchar ]
-"456
+"477
 [v _UART_getchar UART_getchar `(uc  1 s 1 UART_getchar ]
-"474
+"495
 [v _UART_wait_for_char UART_wait_for_char `(uc  1 s 1 UART_wait_for_char ]
-"487
+"508
 [v _send_boot_version send_boot_version `(v  1 s 0 send_boot_version ]
-"501
+"533
 [v _bootloader_state_machine bootloader_state_machine `(v  1 s 0 bootloader_state_machine ]
-"679
+"792
 [v _clear_buffer clear_buffer `(v  1 s 0 clear_buffer ]
-"691
+"804
 [v _jump_to_app jump_to_app `(v  1 s 0 jump_to_app ]
-"700
+"813
 [v _erase_flash erase_flash `(v  1 s 0 erase_flash ]
-"739
+"851
 [v _write_flash write_flash `(v  1 s 0 write_flash ]
 "32358 C:\Program Files\Microchip\xc8\v1.34\include\pic18f26k80.h
 [v _EECON2 EECON2 `VEuc  1 e 1 @3966 ]
 "32377
 [v _EECON1 EECON1 `VEuc  1 e 1 @3967 ]
-[s S583 . 1 `uc 1 RD 1 0 :1:0 
+[s S584 . 1 `uc 1 RD 1 0 :1:0 
 `uc 1 WR 1 0 :1:1 
 `uc 1 WREN 1 0 :1:2 
 `uc 1 WRERR 1 0 :1:3 
@@ -61,11 +63,11 @@
 `uc 1 EEPGD 1 0 :1:7 
 ]
 "32398
-[s S592 . 1 `uc 1 . 1 0 :6:0 
+[s S593 . 1 `uc 1 . 1 0 :6:0 
 `uc 1 EEFS 1 0 :1:6 
 ]
-[u S595 . 1 `S583 1 . 1 0 `S592 1 . 1 0 ]
-[v _EECON1bits EECON1bits `VES595  1 e 1 @3967 ]
+[u S596 . 1 `S584 1 . 1 0 `S593 1 . 1 0 ]
+[v _EECON1bits EECON1bits `VES596  1 e 1 @3967 ]
 [s S102 . 1 `uc 1 LATB0 1 0 :1:0 
 `uc 1 LATB1 1 0 :1:1 
 `uc 1 LATB2 1 0 :1:2 
@@ -395,112 +397,132 @@
 "42809
 "42809
 [v _RCIF RCIF `VEb  1 e 0 @31989 ]
-"123 D:\Projekty\Pic18f_Examples\Pic18f_Bootloader\main.c
+"137 D:\Projekty\Pic18f_Examples\Pic18f_Bootloader\main.c
 [v _gbuffer gbuffer `[64]uc  1 e 64 0 ]
-"350
+"519
+[v _byte_in_record byte_in_record `uc  1 e 1 0 ]
+"520
+[v _temp temp `uc  1 e 1 0 ]
+"521
+[v _crc crc `uc  1 e 1 0 ]
+"522
+[v _address address `ul  1 e 4 0 ]
+"523
+[v _offset offset `ui  1 e 2 0 ]
+"524
+[v _record_type record_type `uc  1 e 1 0 ]
+"525
+[v _end_of_record end_of_record `uc  1 e 1 0 ]
+"526
+[v _byte_index byte_index `ui  1 e 2 0 ]
+"528
+[v _timeout timeout `ul  1 e 4 0 ]
+"529
+[v _i i `uc  1 e 1 0 ]
+"530
+[v _vl vl `uc  1 e 1 0 ]
+"364
 [v _main main `(i  1 e 2 0 ]
 {
-"352
-[v main@hbeat hbeat `ul  1 a 4 25 ]
-"394
+"366
+[v main@hbeat hbeat `ul  1 a 4 29 ]
+"415
 } 0
-"501
+"533
 [v _bootloader_state_machine bootloader_state_machine `(v  1 s 0 bootloader_state_machine ]
 {
 [v bootloader_state_machine@state state `uc  1 a 1 wreg ]
-"532
-[v bootloader_state_machine@adr adr `ul  1 a 4 16 ]
-"501
+"555
+[v bootloader_state_machine@adr adr `ul  1 a 4 20 ]
+"533
 [v bootloader_state_machine@state state `uc  1 a 1 wreg ]
-"503
-[v bootloader_state_machine@byte_in_record byte_in_record `uc  1 s 1 byte_in_record ]
-"504
-[v bootloader_state_machine@temp temp `uc  1 s 1 temp ]
-"505
-[v bootloader_state_machine@crc crc `uc  1 s 1 crc ]
-"507
-[v bootloader_state_machine@record_type record_type `ui  1 s 2 record_type ]
-"508
-[v bootloader_state_machine@end_of_record end_of_record `uc  1 s 1 end_of_record ]
-"509
-[v bootloader_state_machine@byte_index byte_index `ui  1 s 2 byte_index ]
-"510
-[v bootloader_state_machine@page_index page_index `ui  1 s 2 page_index ]
-"511
-[v bootloader_state_machine@timeout timeout `ul  1 s 4 timeout ]
-"512
-[v bootloader_state_machine@i i `uc  1 s 1 i ]
-"501
-[v bootloader_state_machine@state state `uc  1 a 1 15 ]
-"674
+[v bootloader_state_machine@state state `uc  1 a 1 19 ]
+"787
 } 0
-"739
+"851
 [v _write_flash write_flash `(v  1 s 0 write_flash ]
 {
-"741
+"853
 [v write_flash@counter counter `i  1 a 2 9 ]
-"739
+"852
 [v write_flash@address address `ul  1 p 4 0 ]
+"851
 [v write_flash@buffer buffer `*.30uc  1 p 1 4 ]
 [v write_flash@length length `uc  1 p 1 5 ]
-"798
+"910
 } 0
-"487
+"508
 [v _send_boot_version send_boot_version `(v  1 s 0 send_boot_version ]
 {
 [v send_boot_version@buf buf `*.31uc  1 a 1 wreg ]
-"489
+"510
 [v send_boot_version@i i `uc  1 a 1 3 ]
-"487
+"508
 [v send_boot_version@buf buf `*.31uc  1 a 1 wreg ]
-"489
+"510
 [v send_boot_version@buf buf `*.31uc  1 a 1 4 ]
-"496
+"517
 } 0
-"444
+"465
 [v _UART_putchar UART_putchar `(v  1 s 0 UART_putchar ]
 {
 [v UART_putchar@outchar outchar `uc  1 a 1 wreg ]
 [v UART_putchar@outchar outchar `uc  1 a 1 wreg ]
 [v UART_putchar@outchar outchar `uc  1 a 1 0 ]
-"451
+"472
 } 0
-"691
+"804
 [v _jump_to_app jump_to_app `(v  1 s 0 jump_to_app ]
 {
-"695
+"808
 } 0
-"700
+"813
 [v _erase_flash erase_flash `(v  1 s 0 erase_flash ]
 {
+"814
 [v erase_flash@address address `ul  1 p 4 0 ]
-"734
+"846
 } 0
-"679
+"792
 [v _clear_buffer clear_buffer `(v  1 s 0 clear_buffer ]
 {
 [v clear_buffer@buf buf `*.30uc  1 a 1 wreg ]
-"681
-[v clear_buffer@i i `ui  1 a 2 3 ]
-"679
+"793
+[v clear_buffer@i i `ui  1 a 2 2 ]
+"792
 [v clear_buffer@buf buf `*.30uc  1 a 1 wreg ]
 [v clear_buffer@idx idx `ui  1 p 2 0 ]
-"681
-[v clear_buffer@buf buf `*.30uc  1 a 1 2 ]
-"686
+"794
+[v clear_buffer@buf buf `*.30uc  1 a 1 4 ]
+"799
 } 0
-"474
+"4 C:\Program Files\Microchip\xc8\v1.34\sources\common\lbmod.c
+[v ___lbmod __lbmod `(uc  1 e 1 0 ]
+{
+[v ___lbmod@dividend dividend `uc  1 a 1 wreg ]
+"6
+[v ___lbmod@rem rem `uc  1 a 1 3 ]
+"7
+[v ___lbmod@counter counter `uc  1 a 1 2 ]
+"4
+[v ___lbmod@dividend dividend `uc  1 a 1 wreg ]
+[v ___lbmod@divisor divisor `uc  1 p 1 0 ]
+"9
+[v ___lbmod@dividend dividend `uc  1 a 1 1 ]
+"18
+} 0
+"495 D:\Projekty\Pic18f_Examples\Pic18f_Bootloader\main.c
 [v _UART_wait_for_char UART_wait_for_char `(uc  1 s 1 UART_wait_for_char ]
 {
-"482
+"503
 } 0
-"417
+"438
 [v _UART_init UART_init `(v  1 s 0 UART_init ]
 {
-"439
+"460
 } 0
-"456
+"477
 [v _UART_getchar UART_getchar `(uc  1 s 1 UART_getchar ]
 {
-"469
+"490
 } 0

@@ -3,15 +3,15 @@
   <executable name="dist/default/production\Pic18f_Bootloader.production.hex">
     <memory name="program">
       <units>bytes</units>
-      <length>4096</length>
-      <used>1198</used>
-      <free>2898</free>
+      <length>4352</length>
+      <used>1784</used>
+      <free>2568</free>
     </memory>
     <memory name="data">
       <units>bytes</units>
       <length>3649</length>
-      <used>108</used>
-      <free>3541</free>
+      <used>116</used>
+      <free>3533</free>
     </memory>
   </executable>
 </project>
