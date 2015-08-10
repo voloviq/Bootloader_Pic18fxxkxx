@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=Pic18f_Bootloader
+PROJECTNAME=Bootloader_Pic18fxxkxx
 
 # Active Configuration
 DEFAULTCONF=default

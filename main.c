@@ -1,6 +1,7 @@
 /*
   Author: Michal Wolowik
   Corporation: VOLOVIQUE
+
   Date: Warsaw 20-VII-2015
   Destination: 
     Bootloader for Pic18fxxkxx devices
@@ -96,9 +97,11 @@
  Bootloader specific
  */
 /* Bootloader version definition */
-#define VERSION "1.0.a"
+#define VERSION "Boot_1.0.a"
 /* One separately page size */
-#define PAGE_SIZE 64
+#define PAGE_SIZE 0x0040 /* 64 bytes page size */
+/* In no character incoming after TIMEOUT go to user application*/
+#define TIMEOUT 0x00001FFF
 
 
 
@@ -107,7 +110,7 @@
  * Flash necessary defines definition
  */
 /* Define where user application start */
-#define APP_ENTRY 0x1100
+#define APP_ENTRY 0x1000
 /* Maximum amount of Flash */
 #define FLASH_SIZE 0x10000
 /* Quantity 64bytes flash block available for user application */
@@ -117,16 +120,27 @@
 
 
 /*
- * Intel Hexadecimal Object File Format Specification defines
+ * Universal Bootloader request command
  */
-#define DATA_RECORD 0x00
-#define END_OF_FILE_RECORD 0x01
-#define EXTENDED_SEGMENT_ADDRESS_RECORD 0x02
-#define START_SEGMENT_ADDRESS_RECORD 0x03
-#define EXTENDED_LINEAR_ADDRESS_RECORD 0x04
-#define START_LINEAR_ADDRESS_RECORD 0x05
+#define GET_BOOT_VER 0x10 /* Get bootloader version */
+#define HEARTBEAT_INDICATOR 0x11 /* LED diode heartbeat indicator */
+#define PAGE_SIZE_REQUEST 0x12 /* Page size / n-Dat quantity information */
+#define MASS_FLASH_ERASE 0x13 /* Erase all flash pages */
+#define DATA_FLASH_WRITE 0x14 /* Data and Flash Write */
+#define ADDRESS_ALIGMENT 0x15 /* Address aligment factor */
+#define JUMP_TO_APP 0x16 /* Jump to application */
 
-#define RECORD_MARK ':'
+
+
+
+/*
+ * Universal Bootloader answer command
+ */
+#define BOOT_VER_STRING VERSION /* Bootloader version string */
+#define PAGE_SIZE_VALUE PAGE_SIZE /* Specific microcontroller page size */
+#define ADDRESS_ALIGMENT_VALUE 0x003F /* For Pic18fxxkxx devices */
+#define ACKNOWLEDGE 0x12 /* When received proper request send acknowledge */
+
 
 
 
@@ -134,26 +148,12 @@
  Global variables
  */
 /* Buffer which is intended to contain bytes to be written in flash */
-u8 gbuffer[PAGE_SIZE]; 
+u8 gbuffer[PAGE_SIZE];
 
 
 
-/*
-Function name   :   delay_ms
-Description     :   Function give simple delay functionality.
-Input 1         :   u16: Expected delay value
-Output          :   None
-Function return :   None
-Testing result  :   Not tested yet
-Test conditions :   AVT-5275v2 - MCU Clock 64MHz
-Optymalization  :   For XC8 used - 'free'
-Function valid  :   Function invalid - not tested yet
-Function rev.   :   V1_0
-Approved by     :   not approved yet
-Issue date      :   20.VII.2015
-Problem report  :   None
-*/
-/* static void delay_ms(u16 duration); */
+/* Timeout value - when reach TIMEOUT try to go to user application */
+u32 timeout = 0x00000000;
 
 
 
@@ -201,7 +201,7 @@ static void UART_putchar(u8 outchar);
 /*
 Function name   :   UART_getchar
 Description     :   Function receive character acquired from UART if available
-Input 1         :   None
+Input 1         :   u16 tout_val: Wait for character time
 Output          :   None
 Function return :   u8: Return recived byte from UART
 Testing result  :   Not tested yet
@@ -213,35 +213,15 @@ Approved by     :   not approved yet
 Issue date      :   20.VII.2015
 Problem report  :   None
 */
-static u8 UART_getchar(void);
+static u8 UART_getchar(u16 tout_val);
 
 
 
 
 /*
-Function name   :   UART_wait_for_char
-Description     :   Function wait for character from UART and return in value
-Input 1         :   None
-Output          :   None
-Function return :   u8: Return recived byte from UART
-Testing result  :   Not tested yet
-Test conditions :   AVT-5275v2 - MCU Clock 64MHz
-Optymalization  :   For XC8 used - 'free'
-Function valid  :   Function invalid - not tested yet
-Function rev.   :   V1_0
-Approved by     :   not approved yet
-Issue date      :   20.VII.2015
-Problem report  :   None
-*/
-static u8 UART_wait_for_char(void);
-
-
-
-
-/*
-Function name   :   send_boot_version
-Description     :   Function send via UART bootloader version
-Input 1         :   u8 *: string with version terminated with NULL
+Function name   :   send_string_uart
+Description     :   Function send via UART string
+Input 1         :   u8 *: string with at the end NULL character
 Output          :   None
 Function return :   None
 Testing result  :   Not tested yet
@@ -253,7 +233,7 @@ Approved by     :   not approved yet
 Issue date      :   20.VII.2015
 Problem report  :   None
 */
-static void send_boot_version(u8 *buf);
+static void send_string_uart(u8 *buf);
 
 
 
@@ -274,27 +254,6 @@ Issue date      :   20.VII.2015
 Problem report  :   None
 */
 static void bootloader_state_machine(u8 state);
-
-
-
-
-/*
-Function name   :   clear_buffer
-Description     :   Function clear buffer
-Input 1         :   u8 *: buffer to be clear
-Input 2         :   u16 : number of elements to be clear
-Output          :   None
-Function return :   None
-Testing result  :   Not tested yet
-Test conditions :   AVT-5275v2 - MCU Clock 64MHz
-Optymalization  :   For XC8 used - 'free'
-Function valid  :   Function invalid - not tested yet
-Function rev.   :   V1_0
-Approved by     :   not approved yet
-Issue date      :   20.VII.2015
-Problem report  :   None
-*/
-static void clear_buffer(u8 *buf, u16 idx);
 
 
 
@@ -365,7 +324,6 @@ int main(int argc, char** argv)
 {
     u32 hbeat = 0;
 
-
     /* Main Oscillator Configuration */
 
     /* Set Internal Oscillator Frequency to 16[MHz] */
@@ -392,45 +350,29 @@ int main(int argc, char** argv)
     {
         gbuffer[hbeat] = 0xFF;
     }
+    /* Clear timeout value */
+    timeout = 0x00000000;
 
     while(1){
-        if(hbeat == 0x03FF){
+        if(hbeat == 0x03F){
             LED = 1;
             hbeat++;
         }
-        else if( hbeat == 0x2FFF ){
+        else if( hbeat == 0x1FF ){
             LED = 0;
             hbeat++;
         }
-        else if (hbeat == 0x1FFFF){
+        else if (hbeat == 0x9FF){
             hbeat = 0x00;
         }
         else{			
             hbeat++;
         }
-        bootloader_state_machine(UART_getchar());
+        bootloader_state_machine(UART_getchar(0xFF));
     }
 
   return (EXIT_SUCCESS);
 }
-
-
-
-
-/*static void delay_ms(u16 duration)
-{
-  u16 i;
-  u16 j;
-  for (i = duration; i != 0; i--){
-    for (j = 0; j <= 1000; j++){
-      asm("nop");
-      asm("nop");
-      asm("nop");
-    }
-    asm("nop");
-    asm("nop");
-  }
-}*/
 
 
 
@@ -474,27 +416,19 @@ static void UART_putchar(u8 outchar)
 
 
 
-static u8 UART_getchar(void)
+static u8 UART_getchar(u16 tout_val)
 {   
-    if(RCIF){
-        while(!RCIF);
-        if( (RCSTAbits.FERR == 1) || (RCSTAbits.OERR == 1) ){
-            RCSTAbits.CREN = 0; /* Clear an error */
-            RCSTAbits.CREN = 1; /* Start continous receiving again */
+    u16 tout = 0x00000000;
+    
+    while(!RCIF){
+        if(tout == tout_val){
+            return(0);
         }
-        return((u8)RCREG1);
+        else{
+            tout++;
+        }
     }
-    else{
-        return(0);
-    }
-}
-
-
-
-
-static u8 UART_wait_for_char(void)
-{
-    while(!RCIF);
+    timeout = 0x00000000;
     if( (RCSTAbits.FERR == 1) || (RCSTAbits.OERR == 1) ){
         RCSTAbits.CREN = 0; /* Clear an error */
         RCSTAbits.CREN = 1; /* Start continous receiving again */
@@ -505,7 +439,7 @@ static u8 UART_wait_for_char(void)
 
 
 
-static void send_boot_version(u8 *buf)
+static void send_string_uart(u8 *buf)
 {
     u8 i = 0x00;
 
@@ -516,285 +450,79 @@ static void send_boot_version(u8 *buf)
     }while(buf[i++] != '\0');
 }
 
-    u8  byte_in_record = 0x00;
-    u8  temp = 0x00;
-    u8  crc = 0x00;
-    u32 address = 0x00000000;
-    u16 offset = 0x00;
-    u8  record_type = 0x00;
-    u8  end_of_record = 0x00;
-    u16 byte_index = 0x00;
-    u16 size = 0x00;
-    u32 timeout = 0x00;
-    u8  i = 0;
-    u8 vl = 0;
+
 
 
 static void bootloader_state_machine(u8 state)
 {
-
-
+    u32 address = 0x00000000;
+    u8 crc = 0x00;
+    
     switch (state)
     {
-        case 0xC1:{
-            send_boot_version((u8 *)VERSION);	
-            timeout = 0;
+        case GET_BOOT_VER:{
+            /* First send command - Boot Loader Version */
+            UART_putchar(GET_BOOT_VER);
+            send_string_uart((u8 *)BOOT_VER_STRING);
         break;
         }
-        case 0xAA:{
-            UART_putchar(0x55);
-            state = 0x00;
+        case HEARTBEAT_INDICATOR:{
+            UART_putchar(ACKNOWLEDGE);
         break;
         }
-        case 0x31:{
-            if(UART_wait_for_char() == 'Q'){
-                if(UART_wait_for_char() == 'W'){
-                    if(UART_wait_for_char() == 'E'){
-                        if(UART_wait_for_char() == 'R'){
-                            if(UART_wait_for_char() == 'T'){
-                                for (u32 adr = APP_ENTRY; adr < FLASH_SIZE; adr += FLASH_ERASE_BLOCK){
-                                    erase_flash(adr);
-                                }
-                                UART_putchar(0xEE);
-                            }
-                        }
-                    }
-                }
+        case MASS_FLASH_ERASE:{
+            for (u32 adr = APP_ENTRY; adr < FLASH_SIZE; adr += FLASH_ERASE_BLOCK){
+                erase_flash(adr);
             }
-            state = 0x00;
+            UART_putchar(ACKNOWLEDGE);
         break;
         }
-        case 0x32:{	
-            if(UART_wait_for_char() == 'Q'){
-                if(UART_wait_for_char() == 'W'){
-                    if(UART_wait_for_char() == 'E'){
-                        if(UART_wait_for_char() == 'R'){
-                            if(UART_wait_for_char() == 'T'){
-                                /* Processing data which came from UART, byte after byte */
-                                do{
-                                    if(UART_wait_for_char() == RECORD_MARK){
-                                        /* First byte is byte quantity in current record */
-                                        byte_in_record = UART_wait_for_char();
-                                        crc += byte_in_record; // Add to crc
-
-                                        /* Get higher nibble of record address */
-                                        temp = UART_wait_for_char();
-                                        crc += temp; // Add to crc
-                                        offset  = temp<<8;
-
-                                        /* Get lower nibble of record address */
-                                        temp = UART_wait_for_char();
-                                        crc += temp; // Add to crc
-                                        offset |= temp;
-
-                                        /* Get record type */
-                                        temp = UART_wait_for_char();
-                                        crc += temp; // Add to crc
-                                        record_type = temp;
-                                        
-                                        /* Check what kind of record came */
-                                        switch (record_type){
-                                            case DATA_RECORD:
-                                                if((u32)address == (u32)0x00){
-                                                    /* Assign first address from offset */
-                                                    address = (u32)offset;
-    
-                                                    vl = (u8)address;
-
-                                                    vl = (vl % 0x3F)>>4;
-                                                    
-                                                    byte_index = (u16)(0x10*vl);
-
-                                                    address = address - (u32)(vl<<4);
-                                                    
-                                                    size += byte_in_record;
-                                                }
-                                                else if((address+(u32)PAGE_SIZE) < (u32)(offset)){              
-                                                    
-                                                    /* Perform separate write */
-                                                    erase_flash(address);
-                                                    write_flash(address, gbuffer, PAGE_SIZE);
-                                                    
-                                                    /* Clear buffer after write to flash */
-                                                    clear_buffer(gbuffer,PAGE_SIZE);
-                                                    
-                                                    /* Assign new address base on offset */
-                                                    address = (u32)offset;
-                                                    
-                                                    vl = (u8)address;
-
-                                                    vl = (vl % 0x3F)>>4;
-                                                    
-                                                    byte_index = (u16)(0x10*vl);
-
-                                                    address = address - (u32)(vl<<4);
-                                                    
-                                                    // Assign clear new buffer size
-                                                    size = (u16)byte_in_record;
-                                                }
-                                                else{                                            
-                                                    size += (u16)byte_in_record;
-                                                }
-                                                /* One separate record analysis - data buffering */
-                                                for(i=0; i<=byte_in_record; i++){
-                                                    gbuffer[byte_index] = UART_wait_for_char();
-                                                    crc += gbuffer[byte_index];
-                                                    byte_index++;
-                                                }
-                                                byte_index--;
-                                                if((crc&0xFF) == 0){
-                                                    /* If collected page size byte, save page into flash */
-                                                    if(byte_index >= PAGE_SIZE){
-                                                        /* Perform separate write */
-                                                        erase_flash(address);
-                                                        write_flash(address, gbuffer, PAGE_SIZE);
-                                                        
-                                                        address = 0;
-                                                    
-                                                        /* Clear buffer after write to flash */
-                                                        clear_buffer(gbuffer,PAGE_SIZE);
-                                                    
-                                                        byte_index = 0x00;
-                                                        
-                                                        size = (u16)0x00;
-                                                    }
-                                                    UART_putchar(0xCC);
-                                                    crc = 0x00;
-                                                    timeout = 0x00;
-                                                }
-                                                else{	
-                                                    UART_putchar(0xCE);
-                                                    crc = 0x00;
-                                                }
-                                                crc = 0;
-                                                record_type = (u8)1;
-                                                break;
-                                            case END_OF_FILE_RECORD:
-                                                /* If all page filled save into flash */
-                                                if(byte_index != 0)
-                                                {
-                                                    erase_flash(address);
-                                                    write_flash(address, gbuffer, PAGE_SIZE);
-                                                }
-                                                
-                                                /* Perform separate write */
-                                                clear_buffer(gbuffer,PAGE_SIZE);
-                                                
-                                                end_of_record = 1; /* Last record detected */
-                                                
-                                                UART_putchar(0xF0);
-                                                break;
-                                            case EXTENDED_SEGMENT_ADDRESS_RECORD:
-                                                /* According to specification the address should 
-                                                be calculated as follow: */
-
-                                                /* Get higher nibble of record address */
-                                                temp = UART_wait_for_char();
-                                                crc += temp; // Add to crc
-                                                offset  = temp<<8;
-
-                                                /* Get lower nibble of record address */
-                                                temp = UART_wait_for_char();
-                                                crc += temp; // Add to crc
-                                                offset |= temp;
-
-                                                if((crc&0xFF) == 0){
-                                                    UART_putchar(0xCC);
-                                                    timeout = 0x00;
-                                                }
-                                                else{
-                                                    UART_putchar(0xCE);
-                                                }
-                                                crc = 0;
-                                                break;
-                                            case START_SEGMENT_ADDRESS_RECORD:
-                                                break;
-                                            case EXTENDED_LINEAR_ADDRESS_RECORD:
-                                                /* If all page filled save into flash */
-                                                if(byte_index != 0)
-                                                {
-                                                    erase_flash(address);
-                                                    write_flash(address, gbuffer, PAGE_SIZE);
-                                                
-                                                    /* Perform separate write */
-                                                    clear_buffer(gbuffer,PAGE_SIZE);
-                                                }
-                                                
-                                                /* Get higher nibble of record address */
-                                                temp = UART_wait_for_char();
-                                                crc += temp; // Add to crc
-                                                address  = (u32)temp<<24;
-
-                                                /* Get lower nibble of record address */
-                                                temp = UART_wait_for_char();
-                                                crc += temp; // Add to crc
-                                                address |= (u32)temp<<16;
-                                                
-                                                vl = (u8)address;
-
-                                                vl = (vl % 0x3F)>>4;
-
-                                                address = address - (u32)(vl<<4);
-                                                
-                                                if((crc&0xFF) == 0){
-                                                    UART_putchar(0xCC);
-                                                    timeout = 0x00;
-                                                }
-                                                else{
-                                                    UART_putchar(0xCE);
-                                                }
-                                                crc = 0;
-                                                break;
-                                            case START_LINEAR_ADDRESS_RECORD:
-                                                /* TBD */
-                                                break;
-                                            default: /* Unsupported record type */
-                                                break;
-                                        }
-                                    }
-                                    timeout++;
-                                    /* Leave loop when processing finish or detected wrong crc */
-                                }while((end_of_record != 1)||(timeout==100));
-                            }
-                            state = (u16)0;
-                            byte_index = (u16)0;
-                            offset = (u16)0;
-                            byte_in_record = (u16)0;
-                            record_type = (u8)0;
-                            timeout = (u8)0;
-                            end_of_record = (u8)0;
-                            address = (u32)0;
-                            size = (u16)0;
-                            crc = (u8)0;
-                        }
-                    }
-                }
+        case DATA_FLASH_WRITE:{
+            address = (((u32)UART_getchar(0x7FFF))<<24);
+            address |= (((u32)UART_getchar(0x7FFF))<<16);
+            address |= (((u32)UART_getchar(0x7FFF))<<8);
+            address |= ((u32)UART_getchar(0x7FFF));
+            for (u32 adr = 0; adr < PAGE_SIZE; adr++){
+                gbuffer[adr] = UART_getchar(0x7FFF);
             }
+            if(address >= (u32)APP_ENTRY){
+                write_flash(address, gbuffer, PAGE_SIZE);
+            }
+            UART_putchar(ACKNOWLEDGE);
         break;
         }
-        case 0x33:
-        {
-            UART_putchar(0x76);
+        case PAGE_SIZE_REQUEST:{
+            crc = PAGE_SIZE_REQUEST;
+            UART_putchar(PAGE_SIZE_REQUEST);
+            crc += (u8)((PAGE_SIZE_VALUE&0xFF00)>>8);
+            UART_putchar((u8)((PAGE_SIZE_VALUE&0xFF00)>>8));
+            crc += (u8)(PAGE_SIZE_VALUE&0x00FF);
+            UART_putchar((u8)(PAGE_SIZE_VALUE&0x00FF));
+            UART_putchar(crc);
+        break;
+        }
+        case ADDRESS_ALIGMENT:{
+            crc = ADDRESS_ALIGMENT;
+            UART_putchar(ADDRESS_ALIGMENT);
+            crc += (u8)((ADDRESS_ALIGMENT_VALUE&0xFF00)>>8);
+            UART_putchar((u8)((ADDRESS_ALIGMENT_VALUE&0xFF00)>>8));
+            crc += (u8)(ADDRESS_ALIGMENT_VALUE&0x00FF);
+            UART_putchar((u8)(ADDRESS_ALIGMENT_VALUE&0x00FF));
+            UART_putchar(crc);
+        break;
+        }
+        case JUMP_TO_APP:{
+            UART_putchar(ACKNOWLEDGE);
             jump_to_app(); /* Jump to user application code */
         break;
         }
-        default:
-        {
-            ;
+        default:{
+            timeout++;
+            if(timeout == TIMEOUT){
+                jump_to_app(); /* Jump to user application code */
+            }
         break;
         }
-    }
-}
-
-
-
-
-static void clear_buffer(u8 *buf, u16 idx)
-{
-    u16 i = 0x00;
-    for(i=0; i<idx; i++)
-    {
-        buf[i]=0xFF;
     }
 }
 
@@ -803,6 +531,9 @@ static void clear_buffer(u8 *buf, u16 idx)
 
 static void jump_to_app(void)
 {
+    /* Before go to user application set all pheriperals to default */
+    TRISBbits.TRISB0 = 0;
+    
     RCON |= 0x93; /* Set all flags as just after reset */
     asm("goto " ___mkstr(APP_ENTRY));
 }
@@ -854,7 +585,7 @@ static void write_flash(u32 address, u8 *buffer, u8 length)
 
     PIR4bits.EEIF = 0;
 
-    TBLPTRL = (address) & 0xFF;
+    TBLPTRL = (address) & 0xC0;
     TBLPTRH = (address >> 8) & 0xFF;
     TBLPTRU = (address >> 16) & 0xFF;
 
