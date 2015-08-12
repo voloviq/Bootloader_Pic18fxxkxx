@@ -22203,9 +22203,8 @@ address |= ((u32)UART_getchar(0x7FFF));
 for (u32 adr = 0; adr < 0x0040; adr++){
 gbuffer[adr] = UART_getchar(0x7FFF);
 }
-if(address >= (u32)0x1000){
+erase_flash(address);
 write_flash(address, gbuffer, 0x0040);
-}
 UART_putchar(0x12);
 break;
 }
@@ -22267,7 +22266,7 @@ TBLPTRL = (address) & 0xC0;
 TBLPTRH = (address >> 8) & 0xFF;
 TBLPTRU = (address >> 16) & 0xFF;
 
-# 563
+# 562
 EECON1 = 0x94;
 
 EECON2 = 0x55;
@@ -22297,23 +22296,23 @@ TBLPTRL = (address) & 0xC0;
 TBLPTRH = (address >> 8) & 0xFF;
 TBLPTRU = (address >> 16) & 0xFF;
 
-# 596
+# 595
 for (counter = 0; counter < length; counter++) {
 TABLAT = buffer[counter];
 
 
-# 600
+# 599
 #asm
           TBLWT*+
 #endasm ;
       }
 
 
-# 606
+# 605
 #asm
         TBLRD*-
 #endasm ;
-# 623
+# 622
     EECON1 = 0x84;
 
 INTCONbits.GIE = 0;
@@ -22323,10 +22322,18 @@ EECON2 = 0xAA;
 
 EECON1bits.WR = 1;
 
-# 636
+# 635
 INTCONbits.GIE = 1;
 
 while (!PIR4bits.EEIF);
 PIR4bits.EEIF = 0;
 EECON1bits.WREN = 0;
+}
+
+
+
+
+void interrupt high_priority high_isr()
+{
+asm("goto " "0x1008");
 }

@@ -18187,131 +18187,126 @@ Version 3.2 HI-TECH Software Intermediate Code
 "487
 }
 [; ;main.c: 487: }
-[; ;main.c: 488: if(address >= (u32)0x1000){
+[; ;main.c: 488: erase_flash(address);
 "488
-[e $ ! >= _address -> -> 4096 `i `ul 2685  ]
-{
+[e ( _erase_flash (1 _address ]
 [; ;main.c: 489: write_flash(address, gbuffer, 0x0040);
 "489
 [e ( _write_flash (3 , , _address &U _gbuffer -> -> 64 `i `uc ]
+[; ;main.c: 490: UART_putchar(0x12);
 "490
-}
-[e :U 2685 ]
-[; ;main.c: 490: }
-[; ;main.c: 491: UART_putchar(0x12);
-"491
 [e ( _UART_putchar (1 -> -> 18 `i `uc ]
-[; ;main.c: 492: break;
-"492
+[; ;main.c: 491: break;
+"491
 [e $U 2673  ]
-"493
+"492
 }
-[; ;main.c: 493: }
-[; ;main.c: 494: case 0x12:{
+[; ;main.c: 492: }
+[; ;main.c: 493: case 0x12:{
+"493
+[e :U 2685 ]
+{
+[; ;main.c: 494: crc = 0x12;
 "494
+[e = _crc -> -> 18 `i `uc ]
+[; ;main.c: 495: UART_putchar(0x12);
+"495
+[e ( _UART_putchar (1 -> -> 18 `i `uc ]
+[; ;main.c: 496: crc += (u8)((0x0040&0xFF00)>>8);
+"496
+[e =+ _crc -> >> & -> -> 64 `i `ui -> 65280 `ui -> 8 `i `uc ]
+[; ;main.c: 497: UART_putchar((u8)((0x0040&0xFF00)>>8));
+"497
+[e ( _UART_putchar (1 -> >> & -> -> 64 `i `ui -> 65280 `ui -> 8 `i `uc ]
+[; ;main.c: 498: crc += (u8)(0x0040&0x00FF);
+"498
+[e =+ _crc -> & -> 64 `i -> 255 `i `uc ]
+[; ;main.c: 499: UART_putchar((u8)(0x0040&0x00FF));
+"499
+[e ( _UART_putchar (1 -> & -> 64 `i -> 255 `i `uc ]
+[; ;main.c: 500: UART_putchar(crc);
+"500
+[e ( _UART_putchar (1 _crc ]
+[; ;main.c: 501: break;
+"501
+[e $U 2673  ]
+"502
+}
+[; ;main.c: 502: }
+[; ;main.c: 503: case 0x15:{
+"503
 [e :U 2686 ]
 {
-[; ;main.c: 495: crc = 0x12;
-"495
-[e = _crc -> -> 18 `i `uc ]
-[; ;main.c: 496: UART_putchar(0x12);
-"496
-[e ( _UART_putchar (1 -> -> 18 `i `uc ]
-[; ;main.c: 497: crc += (u8)((0x0040&0xFF00)>>8);
-"497
-[e =+ _crc -> >> & -> -> 64 `i `ui -> 65280 `ui -> 8 `i `uc ]
-[; ;main.c: 498: UART_putchar((u8)((0x0040&0xFF00)>>8));
-"498
-[e ( _UART_putchar (1 -> >> & -> -> 64 `i `ui -> 65280 `ui -> 8 `i `uc ]
-[; ;main.c: 499: crc += (u8)(0x0040&0x00FF);
-"499
-[e =+ _crc -> & -> 64 `i -> 255 `i `uc ]
-[; ;main.c: 500: UART_putchar((u8)(0x0040&0x00FF));
-"500
-[e ( _UART_putchar (1 -> & -> 64 `i -> 255 `i `uc ]
-[; ;main.c: 501: UART_putchar(crc);
-"501
-[e ( _UART_putchar (1 _crc ]
-[; ;main.c: 502: break;
-"502
-[e $U 2673  ]
-"503
-}
-[; ;main.c: 503: }
-[; ;main.c: 504: case 0x15:{
+[; ;main.c: 504: crc = 0x15;
 "504
+[e = _crc -> -> 21 `i `uc ]
+[; ;main.c: 505: UART_putchar(0x15);
+"505
+[e ( _UART_putchar (1 -> -> 21 `i `uc ]
+[; ;main.c: 506: crc += (u8)((0x003F&0xFF00)>>8);
+"506
+[e =+ _crc -> >> & -> -> 63 `i `ui -> 65280 `ui -> 8 `i `uc ]
+[; ;main.c: 507: UART_putchar((u8)((0x003F&0xFF00)>>8));
+"507
+[e ( _UART_putchar (1 -> >> & -> -> 63 `i `ui -> 65280 `ui -> 8 `i `uc ]
+[; ;main.c: 508: crc += (u8)(0x003F&0x00FF);
+"508
+[e =+ _crc -> & -> 63 `i -> 255 `i `uc ]
+[; ;main.c: 509: UART_putchar((u8)(0x003F&0x00FF));
+"509
+[e ( _UART_putchar (1 -> & -> 63 `i -> 255 `i `uc ]
+[; ;main.c: 510: UART_putchar(crc);
+"510
+[e ( _UART_putchar (1 _crc ]
+[; ;main.c: 511: break;
+"511
+[e $U 2673  ]
+"512
+}
+[; ;main.c: 512: }
+[; ;main.c: 513: case 0x16:{
+"513
 [e :U 2687 ]
 {
-[; ;main.c: 505: crc = 0x15;
-"505
-[e = _crc -> -> 21 `i `uc ]
-[; ;main.c: 506: UART_putchar(0x15);
-"506
-[e ( _UART_putchar (1 -> -> 21 `i `uc ]
-[; ;main.c: 507: crc += (u8)((0x003F&0xFF00)>>8);
-"507
-[e =+ _crc -> >> & -> -> 63 `i `ui -> 65280 `ui -> 8 `i `uc ]
-[; ;main.c: 508: UART_putchar((u8)((0x003F&0xFF00)>>8));
-"508
-[e ( _UART_putchar (1 -> >> & -> -> 63 `i `ui -> 65280 `ui -> 8 `i `uc ]
-[; ;main.c: 509: crc += (u8)(0x003F&0x00FF);
-"509
-[e =+ _crc -> & -> 63 `i -> 255 `i `uc ]
-[; ;main.c: 510: UART_putchar((u8)(0x003F&0x00FF));
-"510
-[e ( _UART_putchar (1 -> & -> 63 `i -> 255 `i `uc ]
-[; ;main.c: 511: UART_putchar(crc);
-"511
-[e ( _UART_putchar (1 _crc ]
-[; ;main.c: 512: break;
-"512
-[e $U 2673  ]
-"513
-}
-[; ;main.c: 513: }
-[; ;main.c: 514: case 0x16:{
+[; ;main.c: 514: UART_putchar(0x12);
 "514
+[e ( _UART_putchar (1 -> -> 18 `i `uc ]
+[; ;main.c: 515: jump_to_app();
+"515
+[e ( _jump_to_app ..  ]
+[; ;main.c: 516: break;
+"516
+[e $U 2673  ]
+"517
+}
+[; ;main.c: 517: }
+[; ;main.c: 518: default:{
+"518
 [e :U 2688 ]
 {
-[; ;main.c: 515: UART_putchar(0x12);
-"515
-[e ( _UART_putchar (1 -> -> 18 `i `uc ]
-[; ;main.c: 516: jump_to_app();
-"516
-[e ( _jump_to_app ..  ]
-[; ;main.c: 517: break;
-"517
-[e $U 2673  ]
-"518
-}
-[; ;main.c: 518: }
-[; ;main.c: 519: default:{
+[; ;main.c: 519: timeout++;
 "519
-[e :U 2689 ]
-{
-[; ;main.c: 520: timeout++;
-"520
 [e ++ _timeout -> -> -> 1 `i `l `ul ]
-[; ;main.c: 521: if(timeout == 0x00001FFF){
-"521
-[e $ ! == _timeout -> -> -> 8191 `i `l `ul 2690  ]
+[; ;main.c: 520: if(timeout == 0x00001FFF){
+"520
+[e $ ! == _timeout -> -> -> 8191 `i `l `ul 2689  ]
 {
-[; ;main.c: 522: jump_to_app();
-"522
+[; ;main.c: 521: jump_to_app();
+"521
 [e ( _jump_to_app ..  ]
-"523
+"522
 }
-[e :U 2690 ]
-[; ;main.c: 523: }
-[; ;main.c: 524: break;
-"524
+[e :U 2689 ]
+[; ;main.c: 522: }
+[; ;main.c: 523: break;
+"523
 [e $U 2673  ]
+"524
+}
 "525
 }
-"526
-}
+[; ;main.c: 524: }
 [; ;main.c: 525: }
-[; ;main.c: 526: }
 [e $U 2673  ]
 "461
 [e :U 2674 ]
@@ -18319,184 +18314,200 @@ Version 3.2 HI-TECH Software Intermediate Code
  , $ -> -> 17 `i `uc 2676
  , $ -> -> 19 `i `uc 2677
  , $ -> -> 20 `i `uc 2681
- , $ -> -> 18 `i `uc 2686
- , $ -> -> 21 `i `uc 2687
- , $ -> -> 22 `i `uc 2688
- 2689 ]
-"526
+ , $ -> -> 18 `i `uc 2685
+ , $ -> -> 21 `i `uc 2686
+ , $ -> -> 22 `i `uc 2687
+ 2688 ]
+"525
 [e :U 2673 ]
-[; ;main.c: 527: }
-"527
+[; ;main.c: 526: }
+"526
 [e :UE 2672 ]
 }
-"532
+"531
 [v _jump_to_app `(v ~T0 @X0 1 sf ]
-"533
+"532
 {
-[; ;main.c: 532: static void jump_to_app(void)
-[; ;main.c: 533: {
+[; ;main.c: 531: static void jump_to_app(void)
+[; ;main.c: 532: {
 [e :U _jump_to_app ]
 [f ]
-[; ;main.c: 535: TRISBbits.TRISB0 = 0;
-"535
+[; ;main.c: 534: TRISBbits.TRISB0 = 0;
+"534
 [e = . . _TRISBbits 0 0 -> -> 0 `i `uc ]
-[; ;main.c: 537: RCON |= 0x93;
-"537
+[; ;main.c: 536: RCON |= 0x93;
+"536
 [e =| _RCON -> -> 147 `i `uc ]
-[; ;main.c: 538: asm("goto " "0x1000");
-"538
+[; ;main.c: 537: asm("goto " "0x1000");
+"537
 [; <" goto 0x1000 ;# ">
-[; ;main.c: 539: }
-"539
+[; ;main.c: 538: }
+"538
+[e :UE 2690 ]
+}
+"543
+[v _erase_flash `(v ~T0 @X0 1 sf1`ul ]
+"544
+{
+[; ;main.c: 543: static void erase_flash(u32 address)
+[; ;main.c: 544: {
+[e :U _erase_flash ]
+"543
+[v _address `ul ~T0 @X0 1 r1 ]
+"544
+[f ]
+[; ;main.c: 545: PIR4bits.EEIF = 0;
+"545
+[e = . . _PIR4bits 0 6 -> -> 0 `i `uc ]
+[; ;main.c: 547: TBLPTRL = (address) & 0xC0;
+"547
+[e = _TBLPTRL -> & _address -> -> -> 192 `i `l `ul `uc ]
+[; ;main.c: 548: TBLPTRH = (address >> 8) & 0xFF;
+"548
+[e = _TBLPTRH -> & >> _address -> 8 `i -> -> -> 255 `i `l `ul `uc ]
+[; ;main.c: 549: TBLPTRU = (address >> 16) & 0xFF;
+"549
+[e = _TBLPTRU -> & >> _address -> 16 `i -> -> -> 255 `i `l `ul `uc ]
+[; ;main.c: 562: EECON1 = 0x94;
+"562
+[e = _EECON1 -> -> 148 `i `uc ]
+[; ;main.c: 564: EECON2 = 0x55;
+"564
+[e = _EECON2 -> -> 85 `i `uc ]
+[; ;main.c: 565: EECON2 = 0xAA;
+"565
+[e = _EECON2 -> -> 170 `i `uc ]
+[; ;main.c: 566: EECON1bits.WR = 1;
+"566
+[e = . . _EECON1bits 0 1 -> -> 1 `i `uc ]
+[; ;main.c: 568: INTCONbits.GIE = 1;
+"568
+[e = . . _INTCONbits 1 7 -> -> 1 `i `uc ]
+[; ;main.c: 570: while (!PIR4bits.EEIF);
+"570
+[e $U 2692  ]
+[e :U 2693 ]
+[e :U 2692 ]
+[e $ ! != -> . . _PIR4bits 0 6 `i -> -> -> 0 `i `Vuc `i 2693  ]
+[e :U 2694 ]
+[; ;main.c: 571: PIR4bits.EEIF = 0;
+"571
+[e = . . _PIR4bits 0 6 -> -> 0 `i `uc ]
+[; ;main.c: 572: EECON1bits.WREN = 0;
+"572
+[e = . . _EECON1bits 0 2 -> -> 0 `i `uc ]
+[; ;main.c: 573: EECON1bits.FREE = 0;
+"573
+[e = . . _EECON1bits 0 4 -> -> 0 `i `uc ]
+[; ;main.c: 575: INTCONbits.GIE = 0;
+"575
+[e = . . _INTCONbits 1 7 -> -> 0 `i `uc ]
+[; ;main.c: 576: }
+"576
 [e :UE 2691 ]
 }
-"544
-[v _erase_flash `(v ~T0 @X0 1 sf1`ul ]
-"545
-{
-[; ;main.c: 544: static void erase_flash(u32 address)
-[; ;main.c: 545: {
-[e :U _erase_flash ]
-"544
-[v _address `ul ~T0 @X0 1 r1 ]
-"545
-[f ]
-[; ;main.c: 546: PIR4bits.EEIF = 0;
-"546
-[e = . . _PIR4bits 0 6 -> -> 0 `i `uc ]
-[; ;main.c: 548: TBLPTRL = (address) & 0xC0;
-"548
-[e = _TBLPTRL -> & _address -> -> -> 192 `i `l `ul `uc ]
-[; ;main.c: 549: TBLPTRH = (address >> 8) & 0xFF;
-"549
-[e = _TBLPTRH -> & >> _address -> 8 `i -> -> -> 255 `i `l `ul `uc ]
-[; ;main.c: 550: TBLPTRU = (address >> 16) & 0xFF;
-"550
-[e = _TBLPTRU -> & >> _address -> 16 `i -> -> -> 255 `i `l `ul `uc ]
-[; ;main.c: 563: EECON1 = 0x94;
-"563
-[e = _EECON1 -> -> 148 `i `uc ]
-[; ;main.c: 565: EECON2 = 0x55;
-"565
-[e = _EECON2 -> -> 85 `i `uc ]
-[; ;main.c: 566: EECON2 = 0xAA;
-"566
-[e = _EECON2 -> -> 170 `i `uc ]
-[; ;main.c: 567: EECON1bits.WR = 1;
-"567
-[e = . . _EECON1bits 0 1 -> -> 1 `i `uc ]
-[; ;main.c: 569: INTCONbits.GIE = 1;
-"569
-[e = . . _INTCONbits 1 7 -> -> 1 `i `uc ]
-[; ;main.c: 571: while (!PIR4bits.EEIF);
-"571
-[e $U 2693  ]
-[e :U 2694 ]
-[e :U 2693 ]
-[e $ ! != -> . . _PIR4bits 0 6 `i -> -> -> 0 `i `Vuc `i 2694  ]
-[e :U 2695 ]
-[; ;main.c: 572: PIR4bits.EEIF = 0;
-"572
-[e = . . _PIR4bits 0 6 -> -> 0 `i `uc ]
-[; ;main.c: 573: EECON1bits.WREN = 0;
-"573
-[e = . . _EECON1bits 0 2 -> -> 0 `i `uc ]
-[; ;main.c: 574: EECON1bits.FREE = 0;
-"574
-[e = . . _EECON1bits 0 4 -> -> 0 `i `uc ]
-[; ;main.c: 576: INTCONbits.GIE = 0;
-"576
-[e = . . _INTCONbits 1 7 -> -> 0 `i `uc ]
-[; ;main.c: 577: }
-"577
-[e :UE 2692 ]
-}
-"582
+"581
 [v _write_flash `(v ~T0 @X0 1 sf3`ul`*uc`uc ]
-"583
-{
-[; ;main.c: 582: static void write_flash(u32 address, u8 *buffer, u8 length)
-[; ;main.c: 583: {
-[e :U _write_flash ]
 "582
+{
+[; ;main.c: 581: static void write_flash(u32 address, u8 *buffer, u8 length)
+[; ;main.c: 582: {
+[e :U _write_flash ]
+"581
 [v _address `ul ~T0 @X0 1 r1 ]
 [v _buffer `*uc ~T0 @X0 1 r2 ]
 [v _length `uc ~T0 @X0 1 r3 ]
-"583
+"582
 [f ]
-"584
+"583
 [v _counter `i ~T0 @X0 1 a ]
-[; ;main.c: 584: int counter;
-[; ;main.c: 586: PIR4bits.EEIF = 0;
-"586
+[; ;main.c: 583: int counter;
+[; ;main.c: 585: PIR4bits.EEIF = 0;
+"585
 [e = . . _PIR4bits 0 6 -> -> 0 `i `uc ]
-[; ;main.c: 588: TBLPTRL = (address) & 0xC0;
-"588
+[; ;main.c: 587: TBLPTRL = (address) & 0xC0;
+"587
 [e = _TBLPTRL -> & _address -> -> -> 192 `i `l `ul `uc ]
-[; ;main.c: 589: TBLPTRH = (address >> 8) & 0xFF;
-"589
+[; ;main.c: 588: TBLPTRH = (address >> 8) & 0xFF;
+"588
 [e = _TBLPTRH -> & >> _address -> 8 `i -> -> -> 255 `i `l `ul `uc ]
-[; ;main.c: 590: TBLPTRU = (address >> 16) & 0xFF;
-"590
+[; ;main.c: 589: TBLPTRU = (address >> 16) & 0xFF;
+"589
 [e = _TBLPTRU -> & >> _address -> 16 `i -> -> -> 255 `i `l `ul `uc ]
-[; ;main.c: 596: for (counter = 0; counter < length; counter++) {
-"596
+[; ;main.c: 595: for (counter = 0; counter < length; counter++) {
+"595
 {
 [e = _counter -> 0 `i ]
-[e $U 2700  ]
-[e :U 2697 ]
+[e $U 2699  ]
+[e :U 2696 ]
 {
-[; ;main.c: 597: TABLAT = buffer[counter];
-"597
-[e = _TABLAT *U + _buffer * -> _counter `x -> -> # *U _buffer `i `x ]
-"601
-[; <"           TBLWT*+ ;# ">
-"603
-}
+[; ;main.c: 596: TABLAT = buffer[counter];
 "596
-[e ++ _counter -> 1 `i ]
-[e :U 2700 ]
-[e $ < _counter -> _length `i 2697  ]
-[e :U 2698 ]
-"603
+[e = _TABLAT *U + _buffer * -> _counter `x -> -> # *U _buffer `i `x ]
+"600
+[; <"           TBLWT*+ ;# ">
+"602
 }
-"607
-[; ;main.c: 603: }
+"595
+[e ++ _counter -> 1 `i ]
+[e :U 2699 ]
+[e $ < _counter -> _length `i 2696  ]
+[e :U 2697 ]
+"602
+}
+"606
+[; ;main.c: 602: }
 [; <"         TBLRD*- ;# ">
-[; ;main.c: 623: EECON1 = 0x84;
-"623
+[; ;main.c: 622: EECON1 = 0x84;
+"622
 [e = _EECON1 -> -> 132 `i `uc ]
-[; ;main.c: 625: INTCONbits.GIE = 0;
-"625
+[; ;main.c: 624: INTCONbits.GIE = 0;
+"624
 [e = . . _INTCONbits 1 7 -> -> 0 `i `uc ]
-[; ;main.c: 627: EECON2 = 0x55;
-"627
+[; ;main.c: 626: EECON2 = 0x55;
+"626
 [e = _EECON2 -> -> 85 `i `uc ]
-[; ;main.c: 628: EECON2 = 0xAA;
-"628
+[; ;main.c: 627: EECON2 = 0xAA;
+"627
 [e = _EECON2 -> -> 170 `i `uc ]
-[; ;main.c: 630: EECON1bits.WR = 1;
-"630
+[; ;main.c: 629: EECON1bits.WR = 1;
+"629
 [e = . . _EECON1bits 0 1 -> -> 1 `i `uc ]
-[; ;main.c: 636: INTCONbits.GIE = 1;
-"636
+[; ;main.c: 635: INTCONbits.GIE = 1;
+"635
 [e = . . _INTCONbits 1 7 -> -> 1 `i `uc ]
-[; ;main.c: 638: while (!PIR4bits.EEIF);
-"638
-[e $U 2701  ]
-[e :U 2702 ]
+[; ;main.c: 637: while (!PIR4bits.EEIF);
+"637
+[e $U 2700  ]
 [e :U 2701 ]
-[e $ ! != -> . . _PIR4bits 0 6 `i -> -> -> 0 `i `Vuc `i 2702  ]
-[e :U 2703 ]
-[; ;main.c: 639: PIR4bits.EEIF = 0;
-"639
+[e :U 2700 ]
+[e $ ! != -> . . _PIR4bits 0 6 `i -> -> -> 0 `i `Vuc `i 2701  ]
+[e :U 2702 ]
+[; ;main.c: 638: PIR4bits.EEIF = 0;
+"638
 [e = . . _PIR4bits 0 6 -> -> 0 `i `uc ]
-[; ;main.c: 640: EECON1bits.WREN = 0;
-"640
+[; ;main.c: 639: EECON1bits.WREN = 0;
+"639
 [e = . . _EECON1bits 0 2 -> -> 0 `i `uc ]
-[; ;main.c: 641: }
-"641
-[e :UE 2696 ]
+[; ;main.c: 640: }
+"640
+[e :UE 2695 ]
+}
+[v F19192 `(v ~T0 @X0 1 tf ]
+"645
+[v _high_isr `IHF19192 ~T0 @X0 1 e ]
+"646
+{
+[; ;main.c: 645: void interrupt high_priority high_isr()
+[; ;main.c: 646: {
+[e :U _high_isr ]
+[f ]
+[; ;main.c: 647: asm("goto " "0x1008");
+"647
+[; <" goto 0x1008 ;# ">
+[; ;main.c: 648: }
+"648
+[e :UE 2703 ]
 }
 [a 1C 66 111 111 116 95 49 46 48 46 97 0 ]
 

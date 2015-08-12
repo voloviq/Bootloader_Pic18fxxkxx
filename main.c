@@ -485,9 +485,8 @@ static void bootloader_state_machine(u8 state)
             for (u32 adr = 0; adr < PAGE_SIZE; adr++){
                 gbuffer[adr] = UART_getchar(0x7FFF);
             }
-            if(address >= (u32)APP_ENTRY){
-                write_flash(address, gbuffer, PAGE_SIZE);
-            }
+            erase_flash(address);
+            write_flash(address, gbuffer, PAGE_SIZE);
             UART_putchar(ACKNOWLEDGE);
         break;
         }
@@ -638,4 +637,12 @@ static void write_flash(u32 address, u8 *buffer, u8 length)
     while (!PIR4bits.EEIF);
     PIR4bits.EEIF = 0;
     EECON1bits.WREN = 0;
+}
+
+
+#define REMAPPED_HIGH_INTERRUPT_VECTOR_ADDRESS 0x1008
+
+void interrupt high_priority high_isr()
+{
+    asm("goto" ___mkstr(REMAPPED_HIGH_INTERRUPT_VECTOR_ADDRESS));
 }

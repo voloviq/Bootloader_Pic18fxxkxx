@@ -37,12 +37,14 @@
 [v _send_string_uart send_string_uart `(v  1 s 0 send_string_uart ]
 "456
 [v _bootloader_state_machine bootloader_state_machine `(v  1 s 0 bootloader_state_machine ]
-"532
+"531
 [v _jump_to_app jump_to_app `(v  1 s 0 jump_to_app ]
-"544
+"543
 [v _erase_flash erase_flash `(v  1 s 0 erase_flash ]
-"582
+"581
 [v _write_flash write_flash `(v  1 s 0 write_flash ]
+"645
+[v _high_isr high_isr `IIH(v  1 e 0 0 ]
 "32358 C:\Program Files\Microchip\xc8\v1.34\include\pic18f26k80.h
 [v _EECON2 EECON2 `VEuc  1 e 1 @3966 ]
 "32377
@@ -418,18 +420,18 @@
 [v bootloader_state_machine@state state `uc  1 a 1 wreg ]
 "459
 [v bootloader_state_machine@state state `uc  1 a 1 16 ]
-"527
+"526
 } 0
-"582
+"581
 [v _write_flash write_flash `(v  1 s 0 write_flash ]
 {
-"584
+"583
 [v write_flash@counter counter `i  1 a 2 9 ]
-"582
+"581
 [v write_flash@address address `ul  1 p 4 0 ]
 [v write_flash@buffer buffer `*.30uc  1 p 1 4 ]
 [v write_flash@length length `uc  1 p 1 5 ]
-"641
+"640
 } 0
 "442
 [v _send_string_uart send_string_uart `(v  1 s 0 send_string_uart ]
@@ -451,16 +453,16 @@
 [v UART_putchar@outchar outchar `uc  1 a 1 0 ]
 "414
 } 0
-"532
+"531
 [v _jump_to_app jump_to_app `(v  1 s 0 jump_to_app ]
 {
-"539
+"538
 } 0
-"544
+"543
 [v _erase_flash erase_flash `(v  1 s 0 erase_flash ]
 {
 [v erase_flash@address address `ul  1 p 4 0 ]
-"577
+"576
 } 0
 "419
 [v _UART_getchar UART_getchar `(uc  1 s 1 UART_getchar ]
@@ -475,4 +477,9 @@
 [v _UART_init UART_init `(v  1 s 0 UART_init ]
 {
 "402
+} 0
+"645
+[v _high_isr high_isr `IIH(v  1 e 0 0 ]
+{
+"648
 } 0
